@@ -20,6 +20,10 @@ import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 
 public class TarsosDSPActivity extends ActionBarActivity {
 
+    private double[] scale = new double[]{261.63, 311.13, 349.23, 369.99, 392.00, 466.16};
+    private double tolerance = 0.01;
+    private int lastNote = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +46,18 @@ public class TarsosDSPActivity extends ActionBarActivity {
                     public void run() {
                         TextView text = (TextView) findViewById(R.id.textView1);
                         text.setText("" + pitchInHz);
+
+                        TextView resultView = (TextView) findViewById(R.id.resultTextView);
+
+                        for (int i = 0; i < scale.length; ++i) {
+                            if (pitchInHz < (1 + tolerance) * scale[i] &&
+                                    pitchInHz > (1 - tolerance) * scale[i] &&
+                                    i != lastNote) {
+                                resultView.setText(resultView.getText().toString() + " " + i);
+                                lastNote = i;
+                                break;
+                            }
+                        }
                     }
                 });
 
