@@ -24,8 +24,9 @@ import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 
 public class TarsosDSPActivity extends ActionBarActivity {
 
-    private double[] scale = new double[]{126, 146, 151, 174, 188, 214, 237, 255};
-    private double tolerance = 0.01;
+    //private double[] scale = new double[]{126, 147, 151.5, 174, 188, 214, 235, 255.5};
+    private double[] scale = new double[] {800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
+    private double tolerance = 0.02;
     private int lastNote = 0, currCount = 0, curr = 0;
 
     EditText editText;
@@ -192,12 +193,12 @@ public class TarsosDSPActivity extends ActionBarActivity {
         return ret;
     }
 
-    int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
-
+    ///int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
+    int[] songs = {R.raw.s800hz, R.raw.s900hz, R.raw.s1000hz, R.raw.s1100hz, R.raw.s1200hz, R.raw.s1300hz, R.raw.s1400hz, R.raw.s1500hz};
     MediaPlayer mp;
 
     public void playSound(final int index) {
-        if(index >= numberGlobal.length()) return;
+        if(index >= numberGlobal.length()) {mp = null; return;}
         Log.d("abc", "Value of numberGlobal: " + numberGlobal);
         int songIndex = numberGlobal.charAt(index) - '0';
         if(prevGlobal <= songIndex) songIndex++;
