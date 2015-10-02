@@ -194,7 +194,8 @@ public class TarsosDSPActivity extends ActionBarActivity {
     }
 
     ///int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
-    int[] songs = {R.raw.s800hz, R.raw.s900hz, R.raw.s1000hz, R.raw.s1100hz, R.raw.s1200hz, R.raw.s1300hz, R.raw.s1400hz, R.raw.s1500hz};
+    //int[] songs = {R.raw.s800hz, R.raw.s900hz, R.raw.s1000hz, R.raw.s1100hz, R.raw.s1200hz, R.raw.s1300hz, R.raw.s1400hz, R.raw.s1500hz};
+    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
     MediaPlayer mp;
 
     public void playSound(final int index) {
