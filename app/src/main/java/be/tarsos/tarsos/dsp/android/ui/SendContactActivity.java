@@ -1,10 +1,17 @@
 package be.tarsos.tarsos.dsp.android.ui;
 
+import android.content.Intent;
+import android.graphics.Point;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import be.tarsos.dsp.AudioDispatcher;
@@ -22,15 +30,41 @@ import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 
-public class TarsosDSPActivity extends ActionBarActivity {
-
-    //private double[] scale = new double[]{126, 147, 151.5, 174, 188, 214, 235, 255.5};
-    private double[] scale = new double[] {800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
-    private double tolerance = 0.02;
-    private int lastNote = 0, currCount = 0, curr = 0;
+public class SendContactActivity extends ActionBarActivity {
 
     EditText editText;
     Button playButton;
+    String numberGlobal;
+    int prevGlobal;
+    MediaPlayer mp;
+    private LinearLayout backgroundLayout;
+    private Drawable[] backgrounds;
+    private int currentBackground = 0;
+    private double[] scale = new double[] {800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
+    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
+
+    private double tolerance = 0.02;
+    private int lastNote = 0, currCount = 0, curr = 0;
+
+    private void ripple() {
+        final RippleDrawable rippleDrawable = (RippleDrawable) backgroundLayout.getBackground();
+        Point size = new Point();
+        Display display = getWindowManager().getDefaultDisplay();
+        display.getSize(size);
+        rippleDrawable.setHotspot(size.x / 2, size.y / 2);
+        rippleDrawable.setState(new int[]{android.R.attr.state_pressed, android.R.attr.state_enabled});
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                backgroundLayout.setBackground(backgrounds[(++currentBackground) % 2]);
+                rippleDrawable.setState(new int[]{});
+            }
+        }, 500);
+        //backgroundLayout.setBackground(getDrawable(R.drawable.ripple2));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,9 +74,7 @@ public class TarsosDSPActivity extends ActionBarActivity {
                     .add(R.id.container, new PlaceholderFragment()).commit();
         }
 
-
         AudioDispatcher dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
-
 
         dispatcher.addAudioProcessor(new PitchProcessor(PitchEstimationAlgorithm.FFT_YIN, 22050, 1024, new PitchDetectionHandler() {
 
@@ -53,8 +85,6 @@ public class TarsosDSPActivity extends ActionBarActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        TextView text = (TextView) findViewById(R.id.textView1);
-                        text.setText("" + pitchInHz);
 
                         TextView resultView = (TextView) findViewById(R.id.resultTextView);
 
@@ -62,21 +92,28 @@ public class TarsosDSPActivity extends ActionBarActivity {
                             if (pitchInHz < (1 + tolerance) * scale[i] &&
                                     pitchInHz > (1 - tolerance) * scale[i] &&
                                     i != lastNote) {
-                                if(i == curr) {
+                                if (i == curr) {
                                     currCount++;
                                     Log.d("curr", "incremented a " + i);
-                                }
-                                else {
+                                } else {
                                     Log.d("curr", "found a " + i);
                                     curr = i;
                                     currCount = 1;
                                 }
-                                if(currCount > 2) {
+                                if (currCount > 2) {
                                     if (lastNote < i) i--;
                                     String currentString = resultView.getText().toString() + i;
                                     resultView.setText(currentString);
+                                    ripple();
                                     if (isDone(currentString) == true) {
                                         resultView.setText(convertToBase10(currentString));
+                                        Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+                                        // Sets the MIME type to match the Contacts Provider
+                                        intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+                                        intent.putExtra(ContactsContract.Intents.Insert.PHONE, currentString)
+                                                .putExtra(ContactsContract.Intents.Insert.PHONE_TYPE,
+                                                        ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
+                                        startActivity(intent);
                                         //stop listening, go to contact page
                                     }
                                     if (lastNote <= i) lastNote = i + 1;
@@ -96,23 +133,14 @@ public class TarsosDSPActivity extends ActionBarActivity {
 
     boolean isDone(String currentString) {
         String newString = convertToBase10(currentString);
-        if(newString.length() == 10 && newString.charAt(0) - '0' >= 7) return true;
-        else return false;
+        return newString.length() == 10 && newString.charAt(0) - '0' >= 7;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        editText = (EditText) findViewById(R.id.editText1);
-        playButton = (Button) findViewById(R.id.button1);
-        playButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                String text = editText.getText().toString();
-                playString(text);
-            }
-        });
+        backgroundLayout = (LinearLayout) findViewById(R.id.backgroundLayout);
+        backgrounds = new Drawable[]{getDrawable(R.drawable.ripple), getDrawable(R.drawable.ripple2)};
     }
 
     @Override
@@ -134,9 +162,6 @@ public class TarsosDSPActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    String numberGlobal;
-    int prevGlobal;
-
     public void playString(String number) {
 
         numberGlobal = convertToBase7(number);
@@ -146,10 +171,10 @@ public class TarsosDSPActivity extends ActionBarActivity {
     }
 
     private String convertToBase10(String number) {
-        long  originalNumber = 0;
+        long originalNumber = 0;
         int len = number.length();
         long mult = 1, digit;
-        for(int i = len - 1; i >= 0; i--) {
+        for (int i = len - 1; i >= 0; i--) {
             digit = number.charAt(i) - '0';
             digit *= mult;
             originalNumber += digit;
@@ -159,7 +184,7 @@ public class TarsosDSPActivity extends ActionBarActivity {
         Log.d("abc", String.valueOf(originalNumber));
 
         String ret = "";
-        while(originalNumber > 0) {
+        while (originalNumber > 0) {
             digit = originalNumber % 10;
             originalNumber /= 10;
             ret = digit + ret;
@@ -174,7 +199,7 @@ public class TarsosDSPActivity extends ActionBarActivity {
         long originalNumber = 0;
         int len = number.length();
         long mult = 1, digit;
-        for(int i = len - 1; i >= 0; i--) {
+        for (int i = len - 1; i >= 0; i--) {
             digit = number.charAt(i) - '0';
             digit *= mult;
             originalNumber += digit;
@@ -183,7 +208,7 @@ public class TarsosDSPActivity extends ActionBarActivity {
 
 
         String ret = "";
-        while(originalNumber > 0) {
+        while (originalNumber > 0) {
             digit = originalNumber % 7;
             originalNumber /= 7;
             ret = digit + ret;
@@ -193,16 +218,11 @@ public class TarsosDSPActivity extends ActionBarActivity {
         return ret;
     }
 
-    ///int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
-    //int[] songs = {R.raw.s800hz, R.raw.s900hz, R.raw.s1000hz, R.raw.s1100hz, R.raw.s1200hz, R.raw.s1300hz, R.raw.s1400hz, R.raw.s1500hz};
-    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
-    MediaPlayer mp;
-
     public void playSound(final int index) {
-        if(index >= numberGlobal.length()) {mp = null; return;}
+        if (index >= numberGlobal.length()) return;
         Log.d("abc", "Value of numberGlobal: " + numberGlobal);
         int songIndex = numberGlobal.charAt(index) - '0';
-        if(prevGlobal <= songIndex) songIndex++;
+        if (prevGlobal <= songIndex) songIndex++;
         prevGlobal = songIndex;
         mp = MediaPlayer.create(getApplicationContext(), songs[songIndex]);
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -228,7 +248,6 @@ public class TarsosDSPActivity extends ActionBarActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_tarsos_ds,
                     container, false);
-
 
             return rootView;
         }

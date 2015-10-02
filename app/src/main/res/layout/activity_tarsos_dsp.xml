@@ -3,5 +3,5 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="be.tarsos.tarsos.dsp.android.ui.TarsosDSPActivity"
+    tools:context="be.tarsos.tarsos.dsp.android.ui.ReceiveContactActivity"
     tools:ignore="MergeRootFrame" />
