@@ -24,9 +24,9 @@ import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 
 public class TarsosDSPActivity extends ActionBarActivity {
 
-    private double[] scale = new double[]{261.63, 311.13, 349.23, 369.99, 392.00, 466.16};
+    private double[] scale = new double[]{126, 146, 151, 174, 188, 214, 237, 255};
     private double tolerance = 0.01;
-    private int lastNote = -1;
+    private int lastNote = 0, currCount = 0, curr = 0;
 
     EditText editText;
     Button playButton;
@@ -61,8 +61,26 @@ public class TarsosDSPActivity extends ActionBarActivity {
                             if (pitchInHz < (1 + tolerance) * scale[i] &&
                                     pitchInHz > (1 - tolerance) * scale[i] &&
                                     i != lastNote) {
-                                resultView.setText(resultView.getText().toString() + " " + i);
-                                lastNote = i;
+                                if(i == curr) {
+                                    currCount++;
+                                    Log.d("curr", "incremented a " + i);
+                                }
+                                else {
+                                    Log.d("curr", "found a " + i);
+                                    curr = i;
+                                    currCount = 1;
+                                }
+                                if(currCount > 2) {
+                                    if (lastNote < i) i--;
+                                    String currentString = resultView.getText().toString() + i;
+                                    resultView.setText(currentString);
+                                    if (isDone(currentString) == true) {
+                                        resultView.setText(convertToBase10(currentString));
+                                        //stop listening, go to contact page
+                                    }
+                                    if (lastNote <= i) lastNote = i + 1;
+                                    else lastNote = i;
+                                }
                                 break;
                             }
                         }
@@ -73,6 +91,12 @@ public class TarsosDSPActivity extends ActionBarActivity {
         }));
         new Thread(dispatcher, "Audio Dispatcher").start();
 
+    }
+
+    boolean isDone(String currentString) {
+        String newString = convertToBase10(currentString);
+        if(newString.length() == 10 && newString.charAt(0) - '0' >= 7) return true;
+        else return false;
     }
 
     @Override
@@ -110,19 +134,45 @@ public class TarsosDSPActivity extends ActionBarActivity {
     }
 
     String numberGlobal;
+    int prevGlobal;
 
     public void playString(String number) {
 
         numberGlobal = convertToBase7(number);
+        prevGlobal = 0;
         playSound(0);
 
     }
 
+    private String convertToBase10(String number) {
+        long  originalNumber = 0;
+        int len = number.length();
+        long mult = 1, digit;
+        for(int i = len - 1; i >= 0; i--) {
+            digit = number.charAt(i) - '0';
+            digit *= mult;
+            originalNumber += digit;
+            mult *= 7;
+        }
+
+        Log.d("abc", String.valueOf(originalNumber));
+
+        String ret = "";
+        while(originalNumber > 0) {
+            digit = originalNumber % 10;
+            originalNumber /= 10;
+            ret = digit + ret;
+        }
+
+
+        return ret;
+    }
+
     private String convertToBase7(String number) {
 
-        int originalNumber = 0;
+        long originalNumber = 0;
         int len = number.length();
-        int mult = 1, digit;
+        long mult = 1, digit;
         for(int i = len - 1; i >= 0; i--) {
             digit = number.charAt(i) - '0';
             digit *= mult;
@@ -142,14 +192,17 @@ public class TarsosDSPActivity extends ActionBarActivity {
         return ret;
     }
 
-    int[] songs = {R.raw.sa, R.raw.re, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni};
+    int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
 
     MediaPlayer mp;
 
     public void playSound(final int index) {
         if(index >= numberGlobal.length()) return;
         Log.d("abc", "Value of numberGlobal: " + numberGlobal);
-        mp = MediaPlayer.create(getApplicationContext(), songs[numberGlobal.charAt(index) - '0']);
+        int songIndex = numberGlobal.charAt(index) - '0';
+        if(prevGlobal <= songIndex) songIndex++;
+        prevGlobal = songIndex;
+        mp = MediaPlayer.create(getApplicationContext(), songs[songIndex]);
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
