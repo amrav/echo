@@ -1,11 +1,13 @@
 package be.tarsos.tarsos.dsp.android.ui;
 
+import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -28,19 +30,20 @@ import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 
-public class TarsosDSPActivity extends ActionBarActivity {
+public class ReceiveContactActivity extends ActionBarActivity {
 
     EditText editText;
     Button playButton;
     String numberGlobal;
-    int[] songs = {R.raw.sa, R.raw.re, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni};
+    int prevGlobal;
+    int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
     MediaPlayer mp;
-    private double[] scale = new double[]{261.63, 311.13, 349.23, 369.99, 392.00, 466.16};
-    private double tolerance = 0.01;
-    private int lastNote = -1;
     private LinearLayout backgroundLayout;
     private Drawable[] backgrounds;
     private int currentBackground = 0;
+    private double[] scale = new double[]{800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
+    private double tolerance = 0.01;
+    private int lastNote = 0, currCount = 0, curr = 0;
 
     private void ripple() {
         final RippleDrawable rippleDrawable = (RippleDrawable) backgroundLayout.getBackground();
@@ -81,8 +84,6 @@ public class TarsosDSPActivity extends ActionBarActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        TextView text = (TextView) findViewById(R.id.textView1);
-                        text.setText("" + pitchInHz);
 
                         TextView resultView = (TextView) findViewById(R.id.resultTextView);
 
@@ -90,9 +91,33 @@ public class TarsosDSPActivity extends ActionBarActivity {
                             if (pitchInHz < (1 + tolerance) * scale[i] &&
                                     pitchInHz > (1 - tolerance) * scale[i] &&
                                     i != lastNote) {
-                                resultView.setText(resultView.getText().toString() + " " + i);
-                                lastNote = i;
-                                ripple();
+                                if (i == curr) {
+                                    currCount++;
+                                    Log.d("curr", "incremented a " + i);
+                                } else {
+                                    Log.d("curr", "found a " + i);
+                                    curr = i;
+                                    currCount = 1;
+                                }
+                                if (currCount > 2) {
+                                    if (lastNote < i) i--;
+                                    String currentString = resultView.getText().toString() + i;
+                                    resultView.setText(currentString);
+                                    ripple();
+                                    if (isDone(currentString) == true) {
+                                        resultView.setText(convertToBase10(currentString));
+                                        Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+                                        // Sets the MIME type to match the Contacts Provider
+                                        intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+                                        intent.putExtra(ContactsContract.Intents.Insert.PHONE, currentString)
+                                                .putExtra(ContactsContract.Intents.Insert.PHONE_TYPE,
+                                                        ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
+                                        startActivity(intent);
+                                        //stop listening, go to contact page
+                                    }
+                                    if (lastNote <= i) lastNote = i + 1;
+                                    else lastNote = i;
+                                }
                                 break;
                             }
                         }
@@ -105,21 +130,16 @@ public class TarsosDSPActivity extends ActionBarActivity {
 
     }
 
+    boolean isDone(String currentString) {
+        String newString = convertToBase10(currentString);
+        return newString.length() == 10 && newString.charAt(0) - '0' >= 7;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         backgroundLayout = (LinearLayout) findViewById(R.id.backgroundLayout);
         backgrounds = new Drawable[]{getDrawable(R.drawable.ripple), getDrawable(R.drawable.ripple2)};
-        editText = (EditText) findViewById(R.id.editText1);
-        playButton = (Button) findViewById(R.id.button1);
-        playButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                String text = editText.getText().toString();
-                playString(text);
-            }
-        });
     }
 
     @Override
@@ -144,15 +164,40 @@ public class TarsosDSPActivity extends ActionBarActivity {
     public void playString(String number) {
 
         numberGlobal = convertToBase7(number);
+        prevGlobal = 0;
         playSound(0);
 
     }
 
+    private String convertToBase10(String number) {
+        long originalNumber = 0;
+        int len = number.length();
+        long mult = 1, digit;
+        for (int i = len - 1; i >= 0; i--) {
+            digit = number.charAt(i) - '0';
+            digit *= mult;
+            originalNumber += digit;
+            mult *= 7;
+        }
+
+        Log.d("abc", String.valueOf(originalNumber));
+
+        String ret = "";
+        while (originalNumber > 0) {
+            digit = originalNumber % 10;
+            originalNumber /= 10;
+            ret = digit + ret;
+        }
+
+
+        return ret;
+    }
+
     private String convertToBase7(String number) {
 
-        int originalNumber = 0;
+        long originalNumber = 0;
         int len = number.length();
-        int mult = 1, digit;
+        long mult = 1, digit;
         for(int i = len - 1; i >= 0; i--) {
             digit = number.charAt(i) - '0';
             digit *= mult;
@@ -175,7 +220,10 @@ public class TarsosDSPActivity extends ActionBarActivity {
     public void playSound(final int index) {
         if(index >= numberGlobal.length()) return;
         Log.d("abc", "Value of numberGlobal: " + numberGlobal);
-        mp = MediaPlayer.create(getApplicationContext(), songs[numberGlobal.charAt(index) - '0']);
+        int songIndex = numberGlobal.charAt(index) - '0';
+        if (prevGlobal <= songIndex) songIndex++;
+        prevGlobal = songIndex;
+        mp = MediaPlayer.create(getApplicationContext(), songs[songIndex]);
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
