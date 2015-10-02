@@ -1,13 +1,17 @@
 package be.tarsos.tarsos.dsp.android.ui;
 
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import be.tarsos.dsp.AudioDispatcher;
@@ -24,6 +28,8 @@ public class TarsosDSPActivity extends ActionBarActivity {
     private double tolerance = 0.01;
     private int lastNote = -1;
 
+    EditText editText;
+    Button playButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +38,8 @@ public class TarsosDSPActivity extends ActionBarActivity {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new PlaceholderFragment()).commit();
         }
+
+
         AudioDispatcher dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
 
 
@@ -68,6 +76,21 @@ public class TarsosDSPActivity extends ActionBarActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        editText = (EditText) findViewById(R.id.editText1);
+        playButton = (Button) findViewById(R.id.button1);
+        playButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                String text = editText.getText().toString();
+                playString(text);
+            }
+        });
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.tarsos_ds, menu);
@@ -86,6 +109,57 @@ public class TarsosDSPActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    String numberGlobal;
+
+    public void playString(String number) {
+
+        numberGlobal = convertToBase7(number);
+        playSound(0);
+
+    }
+
+    private String convertToBase7(String number) {
+
+        int originalNumber = 0;
+        int len = number.length();
+        int mult = 1, digit;
+        for(int i = len - 1; i >= 0; i--) {
+            digit = number.charAt(i) - '0';
+            digit *= mult;
+            originalNumber += digit;
+            mult *= 10;
+        }
+
+
+        String ret = "";
+        while(originalNumber > 0) {
+            digit = originalNumber % 7;
+            originalNumber /= 7;
+            ret = digit + ret;
+        }
+
+
+        return ret;
+    }
+
+    int[] songs = {R.raw.sa, R.raw.re, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni};
+
+    MediaPlayer mp;
+
+    public void playSound(final int index) {
+        if(index >= numberGlobal.length()) return;
+        Log.d("abc", "Value of numberGlobal: " + numberGlobal);
+        mp = MediaPlayer.create(getApplicationContext(), songs[numberGlobal.charAt(index) - '0']);
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                mp.release();
+                playSound(index + 1);
+            }
+        });
+        mp.start();
+    }
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -99,6 +173,8 @@ public class TarsosDSPActivity extends ActionBarActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_tarsos_ds,
                     container, false);
+
+
             return rootView;
         }
     }
