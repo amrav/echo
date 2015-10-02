@@ -38,7 +38,11 @@ public class ReceiveContactActivity extends ActionBarActivity {
     Button playButton;
     String numberGlobal;
     int prevGlobal;
+    ///int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
+    //int[] songs = {R.raw.s800hz, R.raw.s900hz, R.raw.s1000hz, R.raw.s1100hz, R.raw.s1200hz, R.raw.s1300hz, R.raw.s1400hz, R.raw.s1500hz};
+    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
     MediaPlayer mp;
+    private double tolerance = 0.01;
     private double[] scale = new double[] {800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
     private LinearLayout backgroundLayout;
     private Drawable[] backgrounds;
@@ -198,7 +202,7 @@ public class ReceiveContactActivity extends ActionBarActivity {
         long originalNumber = 0;
         int len = number.length();
         long mult = 1, digit;
-        for(int i = len - 1; i >= 0; i--) {
+        for (int i = len - 1; i >= 0; i--) {
             digit = number.charAt(i) - '0';
             digit *= mult;
             originalNumber += digit;
@@ -207,7 +211,7 @@ public class ReceiveContactActivity extends ActionBarActivity {
 
 
         String ret = "";
-        while(originalNumber > 0) {
+        while (originalNumber > 0) {
             digit = originalNumber % 7;
             originalNumber /= 7;
             ret = digit + ret;
@@ -216,11 +220,6 @@ public class ReceiveContactActivity extends ActionBarActivity {
 
         return ret;
     }
-
-    ///int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
-    //int[] songs = {R.raw.s800hz, R.raw.s900hz, R.raw.s1000hz, R.raw.s1100hz, R.raw.s1200hz, R.raw.s1300hz, R.raw.s1400hz, R.raw.s1500hz};
-    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
-    MediaPlayer mp;
 
     public void playSound(final int index) {
         if(index >= numberGlobal.length()) {mp = null; return;}
