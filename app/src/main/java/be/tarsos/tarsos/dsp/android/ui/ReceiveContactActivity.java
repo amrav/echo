@@ -32,17 +32,17 @@ import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 
 public class ReceiveContactActivity extends ActionBarActivity {
 
+    //private double[] scale = new double[]{126, 147, 151.5, 174, 188, 214, 235, 255.5};
+
     EditText editText;
     Button playButton;
     String numberGlobal;
     int prevGlobal;
-    int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
     MediaPlayer mp;
+    private double[] scale = new double[] {800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
     private LinearLayout backgroundLayout;
     private Drawable[] backgrounds;
     private int currentBackground = 0;
-    private double[] scale = new double[]{800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
-    private double tolerance = 0.01;
     private int lastNote = 0, currCount = 0, curr = 0;
 
     private void ripple() {
@@ -217,8 +217,13 @@ public class ReceiveContactActivity extends ActionBarActivity {
         return ret;
     }
 
+    ///int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
+    //int[] songs = {R.raw.s800hz, R.raw.s900hz, R.raw.s1000hz, R.raw.s1100hz, R.raw.s1200hz, R.raw.s1300hz, R.raw.s1400hz, R.raw.s1500hz};
+    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
+    MediaPlayer mp;
+
     public void playSound(final int index) {
-        if(index >= numberGlobal.length()) return;
+        if(index >= numberGlobal.length()) {mp = null; return;}
         Log.d("abc", "Value of numberGlobal: " + numberGlobal);
         int songIndex = numberGlobal.charAt(index) - '0';
         if (prevGlobal <= songIndex) songIndex++;

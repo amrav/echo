@@ -36,13 +36,14 @@ public class SendContactActivity extends ActionBarActivity {
     Button playButton;
     String numberGlobal;
     int prevGlobal;
-    int[] songs = {R.raw.sa, R.raw.re2, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni, R.raw.sa2};
     MediaPlayer mp;
     private LinearLayout backgroundLayout;
     private Drawable[] backgrounds;
     private int currentBackground = 0;
-    private double[] scale = new double[]{126, 146, 151, 174, 188, 214, 237, 255};
-    private double tolerance = 0.01;
+    private double[] scale = new double[] {800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
+    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
+
+    private double tolerance = 0.02;
     private int lastNote = 0, currCount = 0, curr = 0;
 
     private void ripple() {
