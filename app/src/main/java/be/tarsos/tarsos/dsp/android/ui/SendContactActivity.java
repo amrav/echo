@@ -37,12 +37,11 @@ public class SendContactActivity extends ActionBarActivity {
     String numberGlobal;
     int prevGlobal;
     MediaPlayer mp;
+    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
     private LinearLayout backgroundLayout;
     private Drawable[] backgrounds;
     private int currentBackground = 0;
     private double[] scale = new double[] {800, 900, 1000, 1101, 1200, 1302, 1401, 1502};
-    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
-
     private double tolerance = 0.02;
     private int lastNote = 0, currCount = 0, curr = 0;
 
@@ -114,6 +113,8 @@ public class SendContactActivity extends ActionBarActivity {
             Log.d("phone number!", t.getText());
 
             String ph = t.getText();
+
+            ph = ph.replaceAll("\\D", "");
 
             if (ph.length() > 10) ph = ph.substring(ph.length() - 10);
 

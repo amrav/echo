@@ -15,7 +15,7 @@
 
 
     <TextView
-        android:id="@+id/resultTextView"
+        android:id="@+id/resultSendTextView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:gravity="center"

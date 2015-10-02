@@ -105,6 +105,8 @@ public class ReceiveContactActivity extends ActionBarActivity {
                                 }
                                 if (currCount > 2) {
                                     if (lastNote < i) i--;
+                                    String txt = resultView.getText().toString();
+                                    if (txt.equals("Listening...")) resultView.setText("");
                                     String currentString = resultView.getText().toString() + i;
                                     resultView.setText(currentString);
                                     ripple();
@@ -113,7 +115,7 @@ public class ReceiveContactActivity extends ActionBarActivity {
                                         Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
                                         // Sets the MIME type to match the Contacts Provider
                                         intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
-                                        intent.putExtra(ContactsContract.Intents.Insert.PHONE, currentString)
+                                        intent.putExtra(ContactsContract.Intents.Insert.PHONE, convertToBase10(currentString))
                                                 .putExtra(ContactsContract.Intents.Insert.PHONE_TYPE,
                                                         ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
                                         startActivity(intent);
