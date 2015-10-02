@@ -37,7 +37,9 @@ public class SendContactActivity extends ActionBarActivity {
     String numberGlobal;
     int prevGlobal;
     MediaPlayer mp;
-    int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
+    //int[] songs = {R.raw.s800hz5, R.raw.s900hz5, R.raw.s1000hz5, R.raw.s1100hz5, R.raw.s1200hz5, R.raw.s1300hz5, R.raw.s1400hz5, R.raw.s1500hz5};
+    int[] songs = {R.raw.s800hz2, R.raw.s900hz2, R.raw.s1000hz2, R.raw.s1100hz2, R.raw.s1200hz2, R.raw.s1300hz2, R.raw.s1400hz2, R.raw.s1500hz2};
+
     private LinearLayout backgroundLayout;
     private Drawable[] backgrounds;
     private int currentBackground = 0;

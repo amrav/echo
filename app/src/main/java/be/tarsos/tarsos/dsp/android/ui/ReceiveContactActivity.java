@@ -103,7 +103,7 @@ public class ReceiveContactActivity extends ActionBarActivity {
                                     curr = i;
                                     currCount = 1;
                                 }
-                                if (currCount > 2) {
+                                if (currCount > 1) {
                                     if (lastNote < i) i--;
                                     String txt = resultView.getText().toString();
                                     if (txt.equals("Listening...")) resultView.setText("");
