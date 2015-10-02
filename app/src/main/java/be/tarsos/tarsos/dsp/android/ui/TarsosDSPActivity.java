@@ -1,10 +1,15 @@
 package be.tarsos.tarsos.dsp.android.ui;
 
+import android.graphics.Point;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import be.tarsos.dsp.AudioDispatcher;
@@ -24,12 +30,37 @@ import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 
 public class TarsosDSPActivity extends ActionBarActivity {
 
+    EditText editText;
+    Button playButton;
+    String numberGlobal;
+    int[] songs = {R.raw.sa, R.raw.re, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni};
+    MediaPlayer mp;
     private double[] scale = new double[]{261.63, 311.13, 349.23, 369.99, 392.00, 466.16};
     private double tolerance = 0.01;
     private int lastNote = -1;
+    private LinearLayout backgroundLayout;
+    private Drawable[] backgrounds;
+    private int currentBackground = 0;
 
-    EditText editText;
-    Button playButton;
+    private void ripple() {
+        final RippleDrawable rippleDrawable = (RippleDrawable) backgroundLayout.getBackground();
+        Point size = new Point();
+        Display display = getWindowManager().getDefaultDisplay();
+        display.getSize(size);
+        rippleDrawable.setHotspot(size.x / 2, size.y / 2);
+        rippleDrawable.setState(new int[]{android.R.attr.state_pressed, android.R.attr.state_enabled});
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                backgroundLayout.setBackground(backgrounds[(++currentBackground) % 2]);
+                rippleDrawable.setState(new int[]{});
+            }
+        }, 500);
+        //backgroundLayout.setBackground(getDrawable(R.drawable.ripple2));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,9 +70,7 @@ public class TarsosDSPActivity extends ActionBarActivity {
                     .add(R.id.container, new PlaceholderFragment()).commit();
         }
 
-
         AudioDispatcher dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
-
 
         dispatcher.addAudioProcessor(new PitchProcessor(PitchEstimationAlgorithm.FFT_YIN, 22050, 1024, new PitchDetectionHandler() {
 
@@ -63,6 +92,7 @@ public class TarsosDSPActivity extends ActionBarActivity {
                                     i != lastNote) {
                                 resultView.setText(resultView.getText().toString() + " " + i);
                                 lastNote = i;
+                                ripple();
                                 break;
                             }
                         }
@@ -78,6 +108,8 @@ public class TarsosDSPActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        backgroundLayout = (LinearLayout) findViewById(R.id.backgroundLayout);
+        backgrounds = new Drawable[]{getDrawable(R.drawable.ripple), getDrawable(R.drawable.ripple2)};
         editText = (EditText) findViewById(R.id.editText1);
         playButton = (Button) findViewById(R.id.button1);
         playButton.setOnClickListener(new View.OnClickListener() {
@@ -108,8 +140,6 @@ public class TarsosDSPActivity extends ActionBarActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
-    String numberGlobal;
 
     public void playString(String number) {
 
@@ -142,10 +172,6 @@ public class TarsosDSPActivity extends ActionBarActivity {
         return ret;
     }
 
-    int[] songs = {R.raw.sa, R.raw.re, R.raw.ga, R.raw.ma, R.raw.pa, R.raw.dha, R.raw.ni};
-
-    MediaPlayer mp;
-
     public void playSound(final int index) {
         if(index >= numberGlobal.length()) return;
         Log.d("abc", "Value of numberGlobal: " + numberGlobal);
@@ -173,7 +199,6 @@ public class TarsosDSPActivity extends ActionBarActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_tarsos_ds,
                     container, false);
-
 
             return rootView;
         }
