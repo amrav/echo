@@ -1,13 +1,14 @@
 package be.tarsos.tarsos.dsp.android.ui;
 
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -20,15 +21,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import be.tarsos.dsp.AudioDispatcher;
-import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.io.android.AudioDispatcherFactory;
-import be.tarsos.dsp.pitch.PitchDetectionHandler;
-import be.tarsos.dsp.pitch.PitchDetectionResult;
-import be.tarsos.dsp.pitch.PitchProcessor;
-import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import ezvcard.Ezvcard;
+import ezvcard.VCard;
+import ezvcard.property.Telephone;
 
 public class SendContactActivity extends ActionBarActivity {
 
@@ -72,62 +72,57 @@ public class SendContactActivity extends ActionBarActivity {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new PlaceholderFragment()).commit();
         }
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
 
-        AudioDispatcher dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            Log.d("intent type", type);
 
-        dispatcher.addAudioProcessor(new PitchProcessor(PitchEstimationAlgorithm.FFT_YIN, 22050, 1024, new PitchDetectionHandler() {
+            Uri uri = (Uri) intent.getExtras().get(Intent.EXTRA_STREAM);
 
-            @Override
-            public void handlePitch(PitchDetectionResult pitchDetectionResult,
-                                    AudioEvent audioEvent) {
-                final float pitchInHz = pitchDetectionResult.getPitch();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
+            Log.d("intent uri", uri.toString());
 
-                        TextView resultView = (TextView) findViewById(R.id.resultTextView);
-
-                        for (int i = 0; i < scale.length; ++i) {
-                            if (pitchInHz < (1 + tolerance) * scale[i] &&
-                                    pitchInHz > (1 - tolerance) * scale[i] &&
-                                    i != lastNote) {
-                                if (i == curr) {
-                                    currCount++;
-                                    Log.d("curr", "incremented a " + i);
-                                } else {
-                                    Log.d("curr", "found a " + i);
-                                    curr = i;
-                                    currCount = 1;
-                                }
-                                if (currCount > 2) {
-                                    if (lastNote < i) i--;
-                                    String currentString = resultView.getText().toString() + i;
-                                    resultView.setText(currentString);
-                                    ripple();
-                                    if (isDone(currentString) == true) {
-                                        resultView.setText(convertToBase10(currentString));
-                                        Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
-                                        // Sets the MIME type to match the Contacts Provider
-                                        intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
-                                        intent.putExtra(ContactsContract.Intents.Insert.PHONE, currentString)
-                                                .putExtra(ContactsContract.Intents.Insert.PHONE_TYPE,
-                                                        ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
-                                        startActivity(intent);
-                                        //stop listening, go to contact page
-                                    }
-                                    if (lastNote <= i) lastNote = i + 1;
-                                    else lastNote = i;
-                                }
-                                break;
-                            }
-                        }
-                    }
-                });
-
+            ContentResolver cr = getContentResolver();
+            InputStream stream = null;
+            try {
+                stream = cr.openInputStream(uri);
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
-        }));
-        new Thread(dispatcher, "Audio Dispatcher").start();
 
+            StringBuffer fileContent = new StringBuffer("");
+            int ch;
+            try {
+                while ((ch = stream.read()) != -1) {
+                    fileContent.append((char) ch);
+                    //Log.d("intnet vcard char", "appending char");
+                }
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            String data = new String(fileContent);
+
+            Log.d("VCARD INTENT", "data: " + data);
+
+            VCard vcard = Ezvcard.parse(data).first();
+            Telephone t = vcard.getTelephoneNumbers().get(0);
+            Log.d("phone number!", t.getText());
+
+            String ph = t.getText();
+
+            if (ph.length() > 10) ph = ph.substring(ph.length() - 10);
+
+            Log.d("stripped ph", ph);
+
+            playString(ph);
+
+            //TextView textView = (TextView) findViewById(R.id.resultTextView);
+            //textView.setText(type);
+        }
     }
 
     boolean isDone(String currentString) {
