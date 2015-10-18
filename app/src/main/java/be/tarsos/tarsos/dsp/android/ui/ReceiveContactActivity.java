@@ -5,6 +5,7 @@ import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -112,8 +113,12 @@ public class ReceiveContactActivity extends ActionBarActivity {
                                     ripple();
                                     if (isDone(currentString) == true) {
                                         //change this to open link instead
+                                        Log.d("abc", "Time to open webView");
                                         resultView.setText(convertToBase10(currentString));
-
+                                        Log.d("abc", "Reached here");
+                                        currentString = convertToUrlString(convertToBase10(currentString));
+                                        Log.d("abc", "Url version");
+                                        openWebPage(currentString);
                                         //Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
                                         // Sets the MIME type to match the Contacts Provider
                                         //intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
@@ -138,11 +143,50 @@ public class ReceiveContactActivity extends ActionBarActivity {
 
     }
 
+    char getUrlCharacter(int digit) {
+        int ret;
+        if(digit <= 26) ret = ('A' + digit - 1);
+        else if(digit <= 52) ret = ('a' + digit - 27);
+        else ret = (digit - 53) + '0';
+        return (char) ret;
+    }
+
+    String convertToUrlString(String number) {
+        Log.d("abc", "convertToUrlString(" + number + ")");
+        int index = 1;
+        while(number.charAt(index) == '0') index++;
+        String ret = number.substring(index);
+        Log.d("abc", "ret=" + ret);
+        long encodedNumber = convertToLong(ret);
+        Log.d("abc", "encodedNumber=" + encodedNumber);
+        ret = "";
+        char curr;
+        while(encodedNumber > 0) {
+            int digit =(int) (encodedNumber % 63);
+            curr = getUrlCharacter(digit);
+            ret = ret + curr;
+            encodedNumber /= 63;
+        }
+        Log.d("abc", "converted to=" + ret);
+        return new StringBuilder(ret).reverse().toString();
+    }
+
+    void openWebPage(String url) {
+        url = "http://goo.gl/" + url;
+        Uri webpage = Uri.parse(url);
+        Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+    }
+
     boolean isDone(String currentString) {
         String newString = convertToBase10(currentString);
-        long no = convertToLong(newString);
-        if(no > 992436543 && no < 62523502209L) return true;
-        else return false;
+        boolean ret;
+        if(newString.length() == 12) ret = true;
+        else ret = false;
+        Log.d("abc", "isDone(" + currentString + ") = " + String.valueOf(ret));
+        return ret;
     }
 
     long convertToLong(String str) {

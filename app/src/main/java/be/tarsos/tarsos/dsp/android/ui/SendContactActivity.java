@@ -118,7 +118,7 @@ public class SendContactActivity extends ActionBarActivity {
 
             ph = ph.replaceAll("\\D", "");
 
-            if (ph.length() > 10) ph = ph.substring(ph.length() - 10);
+            //if (ph.length() > 10) ph = ph.substring(ph.length() - 10);
 
             Log.d("stripped ph", ph);
 
@@ -218,7 +218,8 @@ public class SendContactActivity extends ActionBarActivity {
 
     public void playSound(final int index) {
         if (index >= numberGlobal.length()) return;
-        Log.d("abc", "Value of numberGlobal: " + numberGlobal);
+        Log.d("abc", "Value of numberGlobal: " + numberGlobal + ", index: " + index);
+        Log.d("abc", "Playing: " + numberGlobal.charAt(index));
         int songIndex = numberGlobal.charAt(index) - '0';
         if (prevGlobal <= songIndex) songIndex++;
         prevGlobal = songIndex;
