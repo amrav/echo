@@ -111,14 +111,16 @@ public class ReceiveContactActivity extends ActionBarActivity {
                                     resultView.setText(currentString);
                                     ripple();
                                     if (isDone(currentString) == true) {
+                                        //change this to open link instead
                                         resultView.setText(convertToBase10(currentString));
-                                        Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+
+                                        //Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
                                         // Sets the MIME type to match the Contacts Provider
-                                        intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
-                                        intent.putExtra(ContactsContract.Intents.Insert.PHONE, convertToBase10(currentString))
-                                                .putExtra(ContactsContract.Intents.Insert.PHONE_TYPE,
-                                                        ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
-                                        startActivity(intent);
+                                        //intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+                                        //intent.putExtra(ContactsContract.Intents.Insert.PHONE, convertToBase10(currentString))
+                                        //        .putExtra(ContactsContract.Intents.Insert.PHONE_TYPE,
+                                       //                 ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
+                                        //startActivity(intent);
                                         //stop listening, go to contact page
                                     }
                                     if (lastNote <= i) lastNote = i + 1;
@@ -138,7 +140,20 @@ public class ReceiveContactActivity extends ActionBarActivity {
 
     boolean isDone(String currentString) {
         String newString = convertToBase10(currentString);
-        return newString.length() == 10 && newString.charAt(0) - '0' >= 7;
+        long no = convertToLong(newString);
+        if(no > 992436543 && no < 62523502209L) return true;
+        else return false;
+    }
+
+    long convertToLong(String str) {
+
+        long ret = 0;
+        for(int i = 0; i < str.length(); i++) {
+            ret *= 10;
+            ret += str.charAt(i) - '0';
+
+        }
+        return ret;
     }
 
     @Override

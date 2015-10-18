@@ -1,0 +1,14 @@
+#include <bits/stdc++>
+
+int main() {
+
+  cout << "Enter url: ";
+  string url;
+  cin >> url;
+  int i, temp;
+  for(i = 0; i < url.length(); i++) {
+    if(url[i] >= 'A' & url[i] <= 'z') temp = url[i] - 'A';
+    else temp = 52 + url[i] - '0';
+    printf("%2d", temp);
+  }
+  
